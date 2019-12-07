@@ -30,6 +30,6 @@ func (v *Validator) IsValid() bool {
 	return v.e.Len() == 0
 }
 
-func (v *Validator) Errors() Errors {
-	return v.e
+func (v *Validator) Errors() *Errors {
+	return &v.e
 }
