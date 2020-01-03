@@ -139,7 +139,7 @@ func (e *LengthError) Attr() string {
 }
 
 func (e *LengthError) Message() string {
-	return fmt.Sprintf("must have a minimum length of %d", e.min)
+	return fmt.Sprintf("must have a length between %d and %d", e.min, e.max)
 }
 
 func (e *LengthError) Error() string {
