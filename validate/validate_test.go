@@ -5,7 +5,28 @@ import (
 
 	"github.com/jackc/imperator/validate"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestErrorsMarshalJSON(t *testing.T) {
+	var e validate.Errors
+
+	// when nil
+	jsonBytes, err := e.MarshalJSON()
+	require.NoError(t, err)
+	assert.Equal(t, []byte(`{}`), jsonBytes)
+
+	// when empty
+	e = make(validate.Errors)
+	jsonBytes, err = e.MarshalJSON()
+	require.NoError(t, err)
+	assert.Equal(t, []byte(`{}`), jsonBytes)
+
+	e.Add(validate.NewError("foo", "is barred"))
+	jsonBytes, err = e.MarshalJSON()
+	require.NoError(t, err)
+	assert.Equal(t, []byte(`{"foo":["is barred"]}`), jsonBytes)
+}
 
 func TestPresence(t *testing.T) {
 	tests := []struct {

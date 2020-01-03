@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"unicode"
@@ -13,26 +14,21 @@ type Error interface {
 	Error() string
 }
 
-type Errors struct {
-	errors map[string][]Error
+type Errors map[string][]Error
+
+func (e Errors) Add(err Error) {
+	e[err.Attr()] = append(e[err.Attr()], err)
 }
 
-func (e *Errors) Add(err Error) {
-	if e.errors == nil {
-		e.errors = make(map[string][]Error)
-	}
-	e.errors[err.Attr()] = append(e.errors[err.Attr()], err)
-}
-
-func (e *Errors) Error() string {
-	if len(e.errors) == 0 {
+func (e Errors) Error() string {
+	if e.Len() == 0 {
 		return "No errors"
 	}
 
 	sb := &strings.Builder{}
 
 	join := false
-	for attr, errs := range e.errors {
+	for attr, errs := range e {
 		for _, err := range errs {
 			if join {
 				sb.WriteString(" and ")
@@ -45,25 +41,38 @@ func (e *Errors) Error() string {
 	return sb.String()
 }
 
-func (e *Errors) Get(attr string) []Error {
-	if e.errors == nil {
-		return nil
-	}
-
-	return e.errors[attr]
-}
-
-func (e *Errors) Len() int {
-	if e.errors == nil {
+func (e Errors) Len() int {
+	if e == nil {
 		return 0
 	}
 
 	count := 0
-	for _, v := range e.errors {
+	for _, v := range e {
 		count += len(v)
 	}
 
 	return count
+}
+
+func (e Errors) MarshalJSON() ([]byte, error) {
+	if len(e) == 0 {
+		return []byte(`{}`), nil
+	}
+
+	m := make(map[string][]interface{}, len(e))
+	for attr, errs := range e {
+		errSlice := make([]interface{}, len(errs))
+		for i, err := range errs {
+			if jm, ok := err.(json.Marshaler); ok {
+				errSlice[i] = jm
+			} else {
+				errSlice[i] = err.Message()
+			}
+		}
+		m[attr] = errSlice
+	}
+
+	return json.Marshal(m)
 }
 
 func errorString(err Error) string {
