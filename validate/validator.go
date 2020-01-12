@@ -34,6 +34,13 @@ func (v *Validator) IsValid() bool {
 	return v.e.Len() == 0
 }
 
-func (v *Validator) Errors() Errors {
+// Errors returns the validation errors. It will always be nil or a value of type Errors. It purposely returns type
+// error instead of Errors to avoid the issue where an interface has a type but a nil value. This can can test to !=
+// nil.
+func (v *Validator) Errors() error {
+	if v.IsValid() {
+		return nil
+	}
+
 	return v.e
 }
